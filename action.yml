@@ -1,0 +1,21 @@
+---
+name: "Check PHP Version Compatibility"
+author: "Kenzi Stewart <kstewart@speareducation.com>"
+description: "Checks that the application code is compatible with the specified PHP version"
+inputs:
+  php-target-version:
+    description: "Target version in SEMVER format (e.g. 7.2, 7.4, etc)"
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: "Configure Target PHP Version"
+      run: |
+        export PHP_TARGET_VERSION="${{ inputs.php-target-version }}"
+
+    - name: "Install Composer dependencies"
+      run: |
+        COMPOSER_MEMORY_LIMIT=-1 composer require --dev phpcompatibility/php-compatibility roave/security-advisories squizlabs/php_codesniffer
+    - name: "Run PHPCS"
+      run: |
+        phpcs -p $(find . -maxdepth 1 -type d -print | grep -v '^\./\.' | grep -v '^\.$' | grep -v vendor | tr '\n' ' ') --standard=vendor/phpcompatibility/php-compatibility/PHPCompatibility --runtime-set testVersion ${PHP_TARGET_VERSION}
